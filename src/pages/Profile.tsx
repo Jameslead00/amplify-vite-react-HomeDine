@@ -12,7 +12,6 @@ const Profile: React.FC = () => {
   const [userData, setUserData] = useState({
     firstName: '',
     lastName: '',
-    email: '',
     biography: '',
     location: '',
   });
@@ -29,11 +28,15 @@ const Profile: React.FC = () => {
         filter: { cognitoId: { eq: user.userId } }
       });
       if (data.length > 0) {
-        setUserData(data[0]);
+              setUserData({
+                firstName: data[0].firstName || '',
+                lastName: data[0].lastName || '',
+                biography: data[0].biography || '',
+                location: data[0].location || '',
+              });
       }
     }
   };
-
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (user) {
@@ -75,13 +78,6 @@ const Profile: React.FC = () => {
           label="Last Name"
           value={userData.lastName}
           onChange={(e) => setUserData({ ...userData, lastName: e.target.value })}
-          margin="normal"
-        />
-        <TextField
-          fullWidth
-          label="Email"
-          value={userData.email}
-          onChange={(e) => setUserData({ ...userData, email: e.target.value })}
           margin="normal"
         />
         <TextField
