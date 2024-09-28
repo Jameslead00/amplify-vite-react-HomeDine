@@ -26,7 +26,7 @@ const CreateService: React.FC = () => {
         await client.models.Services.create({
           ...serviceData,
           price: parseFloat(serviceData.price),
-          owner: user.userId
+          userId: user.userId
         });
         alert('Service created successfully!');
         // Reset form or redirect

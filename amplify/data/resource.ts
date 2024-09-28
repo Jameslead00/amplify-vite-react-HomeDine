@@ -9,7 +9,7 @@ const schema = a.schema({
       lastName: a.string().required(),
       biography: a.string(),
       location: a.string(),
-      services: a.hasMany('Services', 'userId'),
+      services: a.hasMany('Services', 'serviceId'),
     })
     .authorization((allow) => [allow.owner()]),
 
@@ -21,6 +21,7 @@ const schema = a.schema({
       description: a.string().required(),
       category: a.string().required(),
       price: a.float().required(),
+      userId: a.string().required(),
       user: a.belongsTo('Users', 'userId'),
     })
   .authorization((allow) => [allow.owner()]),
