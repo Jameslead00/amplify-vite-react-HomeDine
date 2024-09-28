@@ -16,7 +16,6 @@ const schema = a.schema({
 
   Services: a
     .model({
-      serviceId: a.id(),
       title: a.string().required(),
       description: a.string().required(),
       category: a.string().required(),

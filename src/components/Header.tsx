@@ -47,6 +47,7 @@ const Header: React.FC = () => {
           <MenuItem onClick={handleMenuClose} component={Link} to="/about">About</MenuItem>
           <MenuItem onClick={handleMenuClose} component={Link} to="/profile">Profile</MenuItem>
           <MenuItem onClick={handleMenuClose} component={Link} to="/create-service">Create Service</MenuItem>
+          <MenuItem onClick={handleMenuClose} component={Link} to="/all-services">All Services</MenuItem>
         </Menu>
         <Button color="inherit" onClick={signOut}>
           Sign Out
