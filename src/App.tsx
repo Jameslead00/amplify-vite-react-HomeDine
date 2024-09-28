@@ -14,6 +14,7 @@ import Layout from './components/Layout';
 import Home from './pages/Home';
 import About from './pages/About';
 import Profile from './pages/Profile';
+import CreateService from './pages/CreateService';
 
 /**
  * Defines the theme configuration for the application, including the primary and secondary color palettes,
@@ -47,6 +48,7 @@ const theme = createTheme({
                     <Route path="/" element={<Home />} />
                     <Route path="/about" element={<About />} />
                     <Route path="/profile" element={<Profile />} />
+                    <Route path="/create-service" element={<CreateService />} />
                   </Routes>
                 </Layout>
               </Router>
