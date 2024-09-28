@@ -15,6 +15,7 @@ const Profile: React.FC = () => {
     biography: '',
     location: '',
   });
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -37,6 +38,7 @@ const Profile: React.FC = () => {
       }
     }
   };
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (user) {
@@ -62,9 +64,7 @@ const Profile: React.FC = () => {
 
   return (
     <Box sx={{ maxWidth: 400, margin: 'auto', padding: 3 }}>
-      <Typography variant="h4" gutterBottom>
-        Edit Profile
-      </Typography>
+      <Typography variant="h4" gutterBottom>User Profile</Typography>
       <form onSubmit={handleSubmit}>
         <TextField
           fullWidth
@@ -72,6 +72,7 @@ const Profile: React.FC = () => {
           value={userData.firstName}
           onChange={(e) => setUserData({ ...userData, firstName: e.target.value })}
           margin="normal"
+          disabled={!isEditing}
         />
         <TextField
           fullWidth
@@ -79,6 +80,7 @@ const Profile: React.FC = () => {
           value={userData.lastName}
           onChange={(e) => setUserData({ ...userData, lastName: e.target.value })}
           margin="normal"
+          disabled={!isEditing}
         />
         <TextField
           fullWidth
@@ -88,6 +90,7 @@ const Profile: React.FC = () => {
           margin="normal"
           multiline
           rows={4}
+          disabled={!isEditing}
         />
         <TextField
           fullWidth
@@ -95,10 +98,22 @@ const Profile: React.FC = () => {
           value={userData.location}
           onChange={(e) => setUserData({ ...userData, location: e.target.value })}
           margin="normal"
+          disabled={!isEditing}
         />
-        <Button type="submit" variant="contained" color="primary" sx={{ mt: 2 }}>
-          Update Profile
-        </Button>
+        {isEditing ? (
+          <>
+            <Button type="submit" variant="contained" color="primary" sx={{ mt: 2, mr: 1 }}>
+              Save Changes
+            </Button>
+            <Button onClick={() => setIsEditing(false)} variant="outlined" sx={{ mt: 2 }}>
+              Cancel
+            </Button>
+          </>
+        ) : (
+          <Button onClick={() => setIsEditing(true)} variant="contained" color="primary" sx={{ mt: 2 }}>
+            Edit Profile
+          </Button>
+        )}
       </form>
     </Box>
   );
