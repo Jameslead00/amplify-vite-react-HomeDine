@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+/*import React, { useState } from 'react';
 import { useAuthenticator } from '@aws-amplify/ui-react';
 import { generateClient } from 'aws-amplify/api';
 import { type Schema } from '../../amplify/data/resource.ts';
@@ -113,3 +113,4 @@ const CreateService: React.FC = () => {
 };
 
 export default CreateService;
+*/
