@@ -22,7 +22,7 @@ const schema = a.schema({
       category: a.string().required(),
       price: a.float().required(),
       userId: a.string().required(),
-      user: a.belongsTo('Users', 'serviceId'),
+      user: a.belongsTo('Users', 'userId'),
     })
   .authorization((allow) => [allow.owner()]),
 });
