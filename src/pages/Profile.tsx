@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuthenticator } from '@aws-amplify/ui-react';
 import { generateClient } from 'aws-amplify/api';
-import { FileUploader } from '@aws-amplify/ui-react-storage';
-import '@aws-amplify/ui-react/styles.css';
+import { uploadData } from 'aws-amplify/storage';
 import { type Schema } from '../../amplify/data/resource';
 import { TextField, Button, Box, Typography } from '@mui/material';
 
@@ -18,6 +17,7 @@ const Profile: React.FC = () => {
     profilePictureUrl: '',
   });
   const [isEditing, setIsEditing] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -32,36 +32,50 @@ const Profile: React.FC = () => {
       });
       if (data.length > 0) {
         setUserData({
-          firstName: data[0].firstName || '',
-          lastName: data[0].lastName || '',
-          biography: data[0].biography || '',
-          location: data[0].location || '',
-          profilePictureUrl: data[0].profilePictureUrl || '',
+          firstName: data[0].firstName ?? '',
+          lastName: data[0].lastName ?? '',
+          biography: data[0].biography ?? '',
+          location: data[0].location ?? '',
+          profilePictureUrl: data[0].profilePictureUrl ?? '',
         });
       }
     }
   };
-    const handleUploadSuccess = async (result: { key?: string }) => {
-      if (user && result.key) {
-        const updatedUserData = {
-          ...userData,
-          profilePictureUrl: result.key,
-          cognitoId: user.userId,
-        };
 
-        try {
-          const { data } = await client.models.Users.update({
-            id: user.userId,
-            ...updatedUserData,
-          });
-          console.log('User data updated:', data);
-          setUserData(updatedUserData);
-        } catch (error) {
-          console.error('Error updating user data:', error);
-        }
-      }
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
+      setFile(event.target.files[0]);
+    }
   };
 
+  const handleUpload = async () => {
+    if (file && user) {
+      try {
+        const result = await uploadData({
+          path: `profile-pictures/${user.userId}/${file.name}`,
+          data: file,
+          options: {
+            bucket: 'profilePicBucket'
+          }
+        }).result;
+
+        const updatedUserData = {
+          ...userData,
+          profilePictureUrl: result.path,
+        };
+
+        const { data } = await client.models.Users.update({
+          id: user.userId,
+          ...updatedUserData,
+        });
+
+        console.log('User data updated:', data);
+        setUserData(updatedUserData);
+      } catch (error) {
+        console.error('Error uploading file or updating user data:', error);
+      }
+    }
+  };
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (user) {
@@ -97,14 +111,10 @@ const Profile: React.FC = () => {
     <Box sx={{ maxWidth: 400, margin: 'auto', padding: 3 }}>
       <Typography variant="h4" gutterBottom>User Profile</Typography>
       <form onSubmit={handleSubmit}>
-        <FileUploader
-          acceptedFileTypes={['image/*']}
-          accessLevel="private"
-          path={`profile-pictures/${user?.userId}/`}
-          maxFileCount={1}
-          isResumable
-          onUploadSuccess={handleUploadSuccess}
-        />
+        <input type="file" onChange={handleFileChange} />
+        <Button onClick={handleUpload} variant="contained" color="primary" sx={{ mt: 2, mb: 2 }}>
+          Upload Profile Picture
+        </Button>
         <TextField
           fullWidth
           label="First Name"
