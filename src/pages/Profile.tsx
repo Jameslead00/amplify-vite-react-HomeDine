@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAuthenticator } from '@aws-amplify/ui-react';
 import { generateClient } from 'aws-amplify/api';
-
+import { uploadData } from 'aws-amplify/storage';
+import { v4 as uuidv4 } from 'uuid';
 import { type Schema } from'../../amplify/data/resource.ts';
 import { TextField, Button, Box, Typography } from '@mui/material';
 
@@ -14,7 +15,9 @@ const Profile: React.FC = () => {
     lastName: '',
     biography: '',
     location: '',
+    profilePictureUrl: '',
   });
+  const [profilePicture, setProfilePicture] = useState<File | null>(null);
   const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
@@ -34,38 +37,75 @@ const Profile: React.FC = () => {
                 lastName: data[0].lastName || '',
                 biography: data[0].biography || '',
                 location: data[0].location || '',
+                profilePictureUrl: data[0].profilePictureUrl || '',
               });
       }
     }
   };
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    if (user) {
-      const existingUser = await client.models.Users.list({
-        filter: { cognitoId: { eq: user.userId } }
-      });
-      
-      if (existingUser.data.length > 0) {
-        await client.models.Users.update({
-          id: existingUser.data[0].id,
-          ...userData,
-          cognitoId: user.userId,
-        });
-      } else {
-        await client.models.Users.create({
-          ...userData,
-          cognitoId: user.userId,
-        });
-      }
-      alert('Profile updated successfully!');
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
+      setProfilePicture(event.target.files[0]);
     }
   };
+  
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (user && profilePicture) {
+      const fileName = `${uuidv4()}-${profilePicture.name}`;
+      try {
+        const result = await uploadData({
+          key: `profile-pictures/${user.userId}/${fileName}`,
+          data: profilePicture,
+          options: {
+            contentType: profilePicture.type,
+          },
+        }).result;
+        console.log('Upload success:', result);
+      
+        // Update user data with profile picture URL
+        const updatedUserData = {
+          ...userData,
+          profilePictureUrl: `profile-pictures/${user.userId}/${fileName}`,
+        };
+      
+        // Update or create user data in the database
+        const existingUser = await client.models.Users.list({
+          filter: { cognitoId: { eq: user.userId } }
+        });
+      
+        if (existingUser.data.length > 0) {
+          await client.models.Users.update({
+            id: existingUser.data[0].id,
+            ...updatedUserData,
+            cognitoId: user.userId,
+          });
+        } else {
+          await client.models.Users.create({
+            ...updatedUserData,
+            cognitoId: user.userId,
+          });
+        }
+      
+        alert('Profile updated successfully!');
+      } catch (error) {
+        console.error('Error uploading file:', error);
+        alert('Error uploading profile picture');
+      }
+    }
+  };
+
 
   return (
     <Box sx={{ maxWidth: 400, margin: 'auto', padding: 3 }}>
       <Typography variant="h4" gutterBottom>User Profile</Typography>
       <form onSubmit={handleSubmit}>
+        <input
+        type="file"
+        accept="image/*"
+        onChange={handleFileChange}
+        disabled={!isEditing}
+        />
         <TextField
           fullWidth
           label="First Name"

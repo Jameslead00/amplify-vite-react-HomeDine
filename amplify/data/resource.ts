@@ -9,6 +9,7 @@ const schema = a.schema({
       lastName: a.string().required(),
       biography: a.string(),
       location: a.string(),
+      profilePictureUrl: a.string(),
       services: a.hasMany('Services', 'userId'),
     })
     .authorization((allow) => [allow.owner()]),
