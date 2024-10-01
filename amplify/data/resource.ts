@@ -13,7 +13,6 @@ const schema = a.schema({
     })
     .authorization((allow) => [allow.owner()]),
 
-
   Services: a
     .model({
       title: a.string().required(),
@@ -23,9 +22,11 @@ const schema = a.schema({
       userId: a.string().required(),
       user: a.belongsTo('Users', 'userId'),
     })
-  .authorization((allow) => [allow.owner()]),
+    .authorization((allow) => [
+      allow.owner(),
+      allow.authenticated().to(["read"]),
+    ]),
 });
-
 
 export type Schema = ClientSchema<typeof schema>;
 
@@ -35,5 +36,3 @@ export const data = defineData({
     defaultAuthorizationMode: 'userPool',
   },
 });
-
-

@@ -2,6 +2,7 @@
   import { generateClient } from 'aws-amplify/api';
   import { type Schema } from '../../amplify/data/resource';
   import { getCurrentUser } from 'aws-amplify/auth';
+  import { Box, Card, CardContent, Typography, TextField, Select, MenuItem, Grid, Divider } from '@mui/material';
 
   const client = generateClient<Schema>();
 
@@ -43,62 +44,85 @@
         }
       }
 
-      async function fetchUserServices() {
-        try {
-          const { userId } = await getCurrentUser();
-          const result = await client.models.Services.list({
-            filter: { userId: { eq: userId } }
-          });
-          if ('data' in result) {
-            const mappedUserServices = result.data.map(service => ({
-              ...service,
-              serviceId: service.id
-            }));
-            setUserServices(mappedUserServices);
-          }
-        } catch (error) {
-          console.error('Error fetching user services:', error);
+    async function fetchUserServices() {
+      try {
+        const { userId } = await getCurrentUser();
+        const result = await client.models.Services.list({
+          filter: { userId: { eq: userId } }
+        });
+        if ('data' in result) {
+          const mappedUserServices = result.data.map(service => ({
+            ...service,
+            serviceId: service.id
+          }));
+          setUserServices(mappedUserServices);
         }
+      } catch (error) {
+        console.error('Error fetching user services:', error);
       }
+    }
+
     const filteredServices = services.filter(service => 
       service.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
       (selectedCategory === '' || service.category === selectedCategory)
     );
 
     return (
-      <div style={{ display: 'flex' }}>
-        <div style={{ flex: 2, marginRight: '20px' }}>
-          <h2>All Services</h2>
-          <input 
-            type="text" 
-            placeholder="Search services" 
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          <select onChange={(e) => setSelectedCategory(e.target.value)}>
-            <option value="">All Categories</option>
-            {/* Add your categories dynamically */}
-          </select>
-          {filteredServices.map(service => (
-            <div key={service.serviceId}>
-              <h3>{service.title}</h3>
-              <p>{service.description}</p>
-              <p>Category: {service.category}</p>
-              <p>Price: ${service.price}</p>
-            </div>
-          ))}
-        </div>
-        <div style={{ flex: 1 }}>
-          <h2>My Services</h2>
-          {userServices.map(service => (
-            <div key={service.serviceId}>
-              <h3>{service.title}</h3>
-              <p>{service.description}</p>
-              <p>Category: {service.category}</p>
-              <p>Price: ${service.price}</p>
-            </div>
-          ))}
-        </div>
-      </div>
+      <Box sx={{ display: 'flex', p: 3 }}>
+        <Box sx={{ flex: 2, mr: 3 }}>
+          <Typography variant="h4" gutterBottom>All Services</Typography>
+          <Box sx={{ mb: 3 }}>
+            <TextField 
+              fullWidth
+              variant="outlined"
+              placeholder="Search services"
+              onChange={(e) => setSearchQuery(e.target.value)}
+              sx={{ mb: 2 }}
+            />
+            <Select
+              fullWidth
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value as string)}
+              displayEmpty
+            >
+              <MenuItem value="">All Categories</MenuItem>
+              {/* Add your categories dynamically */}
+            </Select>
+          </Box>
+          <Grid container spacing={2}>
+            {filteredServices.map(service => (
+              <Grid item xs={12} sm={6} md={4} key={service.serviceId}>
+                <Card elevation={3}>
+                  <CardContent>
+                    <Typography variant="h6">{service.title}</Typography>
+                    <Typography variant="body2" color="text.secondary">{service.description}</Typography>
+                    <Typography variant="subtitle2">Category: {service.category}</Typography>
+                    <Typography variant="subtitle1">Price: ${service.price}</Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
+        <Divider orientation="vertical" flexItem />
+        <Box sx={{ flex: 1, ml: 3 }}>
+          <Typography variant="h4" gutterBottom>My Services</Typography>
+          <Grid container spacing={2}>
+            {userServices.map(service => (
+              <Grid item xs={12} key={service.serviceId}>
+                <Card elevation={3}>
+                  <CardContent>
+                    <Typography variant="h6">{service.title}</Typography>
+                    <Typography variant="body2" color="text.secondary">{service.description}</Typography>
+                    <Typography variant="subtitle2">Category: {service.category}</Typography>
+                    <Typography variant="subtitle1">Price: ${service.price}</Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
+      </Box>
     );
   };
 
