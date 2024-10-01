@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useAuthenticator } from '@aws-amplify/ui-react';
 import { generateClient } from 'aws-amplify/api';
-import { uploadData } from 'aws-amplify/storage';
-import { v4 as uuidv4 } from 'uuid';
-import { type Schema } from'../../amplify/data/resource.ts';
+import { FileUploader } from '@aws-amplify/ui-react-storage';
+import '@aws-amplify/ui-react/styles.css';
+import { type Schema } from '../../amplify/data/resource';
 import { TextField, Button, Box, Typography } from '@mui/material';
 
 const client = generateClient<Schema>();
@@ -17,7 +17,6 @@ const Profile: React.FC = () => {
     location: '',
     profilePictureUrl: '',
   });
-  const [profilePicture, setProfilePicture] = useState<File | null>(null);
   const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
@@ -32,43 +31,41 @@ const Profile: React.FC = () => {
         filter: { cognitoId: { eq: user.userId } }
       });
       if (data.length > 0) {
-              setUserData({
-                firstName: data[0].firstName || '',
-                lastName: data[0].lastName || '',
-                biography: data[0].biography || '',
-                location: data[0].location || '',
-                profilePictureUrl: data[0].profilePictureUrl || '',
-              });
+        setUserData({
+          firstName: data[0].firstName || '',
+          lastName: data[0].lastName || '',
+          biography: data[0].biography || '',
+          location: data[0].location || '',
+          profilePictureUrl: data[0].profilePictureUrl || '',
+        });
       }
     }
   };
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files[0]) {
-      setProfilePicture(event.target.files[0]);
-    }
-  };
-  
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    if (user && profilePicture) {
-      const fileName = `${uuidv4()}-${profilePicture.name}`;
-      try {
-        const result = await uploadData({
-          key: `profile-pictures/${user.userId}/${fileName}`,
-          data: profilePicture,
-          options: {
-            contentType: profilePicture.type,
-          },
-        }).result;
-        console.log('Upload success:', result);
-      
-        // Update user data with profile picture URL
+    const handleUploadSuccess = async (result: { key?: string }) => {
+      if (user && result.key) {
         const updatedUserData = {
           ...userData,
-          profilePictureUrl: `profile-pictures/${user.userId}/${fileName}`,
+          profilePictureUrl: result.key,
+          cognitoId: user.userId,
         };
-      
+
+        try {
+          const { data } = await client.models.Users.update({
+            id: user.userId,
+            ...updatedUserData,
+          });
+          console.log('User data updated:', data);
+          setUserData(updatedUserData);
+        } catch (error) {
+          console.error('Error updating user data:', error);
+        }
+      }
+  };
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (user) {
+      try {
         // Update or create user data in the database
         const existingUser = await client.models.Users.list({
           filter: { cognitoId: { eq: user.userId } }
@@ -77,34 +74,36 @@ const Profile: React.FC = () => {
         if (existingUser.data.length > 0) {
           await client.models.Users.update({
             id: existingUser.data[0].id,
-            ...updatedUserData,
+            ...userData,
             cognitoId: user.userId,
           });
         } else {
           await client.models.Users.create({
-            ...updatedUserData,
+            ...userData,
             cognitoId: user.userId,
           });
         }
       
         alert('Profile updated successfully!');
+        setIsEditing(false);
       } catch (error) {
-        console.error('Error uploading file:', error);
-        alert('Error uploading profile picture');
+        console.error('Error updating profile:', error);
+        alert('Error updating profile');
       }
     }
   };
-
 
   return (
     <Box sx={{ maxWidth: 400, margin: 'auto', padding: 3 }}>
       <Typography variant="h4" gutterBottom>User Profile</Typography>
       <form onSubmit={handleSubmit}>
-        <input
-        type="file"
-        accept="image/*"
-        onChange={handleFileChange}
-        disabled={!isEditing}
+        <FileUploader
+          acceptedFileTypes={['image/*']}
+          accessLevel="private"
+          path={`profile-pictures/${user?.userId}/`}
+          maxFileCount={1}
+          isResumable
+          onUploadSuccess={handleUploadSuccess}
         />
         <TextField
           fullWidth
